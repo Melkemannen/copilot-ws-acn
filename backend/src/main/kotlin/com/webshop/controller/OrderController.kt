@@ -1,6 +1,7 @@
 package com.webshop.controller
 
 import com.webshop.model.Order
+import com.webshop.service.CreateOrderItemCommand
 import com.webshop.service.OrderService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -29,20 +30,21 @@ class OrderController(
 ) {
     @GetMapping
     fun getAllOrders(): ResponseEntity<List<Order>> {
-        // GET /api/orders — TODO: return all orders
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(emptyList())
+        return ResponseEntity.ok(orderService.getAllOrders())
     }
 
     @GetMapping("/{id}")
     fun getOrderById(@PathVariable id: Long): ResponseEntity<Order> {
-        // GET /api/orders/{id} — TODO: return order by id
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build()
+        return ResponseEntity.ok(orderService.getOrderById(id))
     }
 
     @PostMapping
     fun createOrder(@RequestBody request: CreateOrderRequest): ResponseEntity<Order> {
-        // POST /api/orders — TODO: create new order from request body
-        // Hint: map request.items to service commands, then call orderService.createOrder(...)
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build()
+        val order = orderService.createOrder(
+            customerName = request.customerName,
+            customerEmail = request.customerEmail,
+            items = request.items.map { CreateOrderItemCommand(it.productId, it.quantity) },
+        )
+        return ResponseEntity.status(HttpStatus.CREATED).body(order)
     }
 }

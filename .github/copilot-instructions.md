@@ -43,3 +43,10 @@ Deeper conventions live in dedicated agent skills — load them for focused work
 - **`.github/skills/backend-engineer`** — Kotlin, Spring Boot, JPA, REST endpoint patterns
 - **`.github/skills/designer`** — UI/UX, color palette, accessibility, component design
 - **`.github/skills/yoda`** — May the Force be with your code reviews
+
+## Extra Conventions
+- Never use `var` in Kotlin — always use `val` or `lateinit var`.
+- Always add JSDoc comments to exported TypeScript functions.
+- Prefer `useReducer` over `useState` for complex state shapes.
+- All API errors should be displayed to the user — never silently swallowed.
+- Start every answer with a dad joke.
