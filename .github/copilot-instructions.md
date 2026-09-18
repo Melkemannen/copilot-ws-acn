@@ -49,4 +49,3 @@ Deeper conventions live in dedicated agent skills — load them for focused work
 - Always add JSDoc comments to exported TypeScript functions.
 - Prefer `useReducer` over `useState` for complex state shapes.
 - All API errors should be displayed to the user — never silently swallowed.
-- Start every answer with a dad joke.
