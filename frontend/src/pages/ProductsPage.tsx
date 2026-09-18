@@ -1,40 +1,87 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Cart } from '../components/Cart'
 import { ProductCard } from '../components/ProductCard'
 import { fetchProducts } from '../services/api'
 import type { CartItem, Product } from '../types'
 
+const CART_STORAGE_KEY = 'webshop-cart'
+
+function readCartItems(): CartItem[] {
+  try {
+    const storedValue = window.localStorage.getItem(CART_STORAGE_KEY)
+    return storedValue ? (JSON.parse(storedValue) as CartItem[]) : []
+  } catch {
+    return []
+  }
+}
+
+function saveCartItems(items: CartItem[]): void {
+  window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+  window.dispatchEvent(new Event('cart-updated'))
+}
+
 export function ProductsPage() {
   const navigate = useNavigate()
-  const [products] = useState<Product[]>([])
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
-  const [loading] = useState<boolean>(false)
-  const [error] = useState<string | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => readCartItems())
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true)
+
+      try {
+        const fetchedProducts = await fetchProducts()
+        setProducts(fetchedProducts)
+      } catch (caughtError) {
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to fetch products')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void loadProducts()
+  }, [])
 
   const handleAddToCart = (product: Product) => {
     setCartItems((currentItems) => {
       const existingItem = currentItems.find((item) => item.product.id === product.id)
 
       if (existingItem) {
-        return currentItems.map((item) =>
+        if (existingItem.quantity >= product.stock) {
+          return currentItems
+        }
+
+        const updatedItems = currentItems.map((item) =>
           item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
         )
+        saveCartItems(updatedItems)
+        return updatedItems
       }
 
-      return [...currentItems, { product, quantity: 1 }]
+      if (product.stock === 0) {
+        return currentItems
+      }
+
+      const updatedItems = [...currentItems, { product, quantity: 1 }]
+      saveCartItems(updatedItems)
+      return updatedItems
     })
   }
 
   const handleRemoveItem = (productId: number) => {
-    setCartItems((currentItems) => currentItems.filter((item) => item.product.id !== productId))
+    setCartItems((currentItems) => {
+      const updatedItems = currentItems.filter((item) => item.product.id !== productId)
+      saveCartItems(updatedItems)
+      return updatedItems
+    })
   }
 
   const handleCheckout = () => {
     navigate('/checkout')
   }
-
-  void fetchProducts
 
   return (
     <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: '2fr 1fr' }}>

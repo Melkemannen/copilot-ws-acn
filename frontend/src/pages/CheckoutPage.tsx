@@ -1,4 +1,5 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
 import { createOrder } from '../services/api'
 import type { CartItem, CreateOrderRequest } from '../types'
 
@@ -21,16 +22,14 @@ export function CheckoutPage() {
   const [customerName, setCustomerName] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const cartItems = useMemo(() => readCartItems(), [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setStatusMessage(null)
+    setErrorMessage(null)
 
-    // TODO: Use Copilot to implement the form submission
-    // 1. Build a CreateOrderRequest from cart items and form values
-    // 2. Call createOrder() from '../services/api'
-    // 3. Show success message with order ID
-    // 4. Clear the cart
     const draftRequest: CreateOrderRequest = {
       customerName,
       customerEmail,
@@ -40,16 +39,18 @@ export function CheckoutPage() {
       })),
     }
 
-    void createOrder
-    setStatusMessage(`TODO: submit order for ${draftRequest.customerEmail}`)
+    try {
+      const order = await createOrder(draftRequest)
+      window.localStorage.removeItem(CART_STORAGE_KEY)
+      setStatusMessage(`Order placed successfully. Your order ID is ${order.id}.`)
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to place your order.')
+    }
   }
 
   return (
     <section style={{ maxWidth: '640px', margin: '0 auto', backgroundColor: '#fff', padding: '24px', borderRadius: '16px' }}>
       <h1>Checkout</h1>
-      <p style={{ color: '#475569' }}>
-        Complete the TODOs with Copilot to wire this page to the backend order API.
-      </p>
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '16px' }}>
         <label>
           <span style={{ display: 'block', marginBottom: '6px' }}>Customer name</span>
@@ -85,6 +86,7 @@ export function CheckoutPage() {
         <button type="submit">Place order</button>
       </form>
       {statusMessage && <p style={{ marginTop: '16px', color: '#2563eb' }}>{statusMessage}</p>}
+      {errorMessage && <p style={{ marginTop: '16px', color: '#dc2626' }}>{errorMessage}</p>}
     </section>
   )
 }
